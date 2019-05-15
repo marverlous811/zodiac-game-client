@@ -1,15 +1,17 @@
 import Player from "./controller/player";
 import "phaser"
+import { GameScene } from "./sences/game";
 
 const player = new Player("marverlous");
 console.log("hello ", player.getName());
 
+const gameSence = new GameScene({});
+
 const config: Phaser.Types.Core.GameConfig = {
     title: "Starfall",
-    width: 800,
-    height: 600,
-    parent: "game",
-    backgroundColor: "#18216D"
+    width: 1024,
+    height: 768,
+    scene: [gameSence],
 };
 
 const game = new Phaser.Game(config);
