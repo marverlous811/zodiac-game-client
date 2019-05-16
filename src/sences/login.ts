@@ -14,7 +14,7 @@ export class Login extends Phaser.Scene{
     }
 
     create(){
-        this.text = this.add.text(10, 10, 'Please enter your name', {color: 'white', fontFamily: 'Arial', fontSize: '32px '});
+        this.text = this.add.text(10, 10, 'Please enter your name', {color: 'white', fontFamily: 'Arial', fontSize: '32px'});
         this.form = this.add.dom(525, 375).createFromCache('loginForm');
         this.form.setPerspective(800);
         this.form.addListener('click');

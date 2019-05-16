@@ -15,6 +15,10 @@ export class Socket extends events.EventEmitter{
         return this._socket;
     }
 
+    get name(){
+        return this.playerName;
+    }
+
     setName(player: string){
         this.playerName = player;
     }
@@ -38,5 +42,13 @@ export class Socket extends events.EventEmitter{
     onDisconnected = () => {
         console.log("disconnected");
         this.emit('disconnected');
+    }
+
+    resgistEventHandle(name: string, handle: any){
+        this._socket.on(name, handle);
+    }
+
+    send(name: string, data: string){
+        this.socket.emit(name, data);
     }
 }

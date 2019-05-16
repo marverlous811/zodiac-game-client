@@ -8,6 +8,11 @@ export class GameScene extends Phaser.Scene{
     nowCard : number = 0;
     nowCardImage : Phaser.GameObjects.Image | undefined;
     socket: Socket;
+    readyButton : Phaser.GameObjects.Image | undefined;
+    notifyText : Phaser.GameObjects.Text | undefined;
+    yourInfo : Phaser.GameObjects.Text | undefined;
+    score : number = 0;
+    _name : string = '';
     constructor(socket: Socket){
         super({key: "game"});
         this.cardFactory = new CardFactory(this);
@@ -37,7 +42,15 @@ export class GameScene extends Phaser.Scene{
             }
         }
 
+        this.load.image('ready', '/assets/UI/ready_button.png');
+        this.notifyText = this.add.text(10,10, "welcome to game room", {color: 'white', fontFamily: 'Arial', fontSize: '32px'})
         this.input.on("pointerdown", this.onClick);
+        this.input.on("gameobjectdown", this.onObjectClicked);
+    }
+
+    setListener(){
+        this.socket.resgistEventHandle("PLAYER_READY", this.onPlayerReady);
+        this.socket.resgistEventHandle("START_GAME", this.onGameStart);
     }
 
     onClick = () => {
@@ -58,14 +71,43 @@ export class GameScene extends Phaser.Scene{
     }
 
     create(){
-        this.nowCardImage = this.add.image(300,400, this.listCard[this.nowCard]);
-        // console.log("create sence...");
-        // setInterval(() => {
-        //     this.onClick();
-        // },1000);
+        this.setListener();
+        this.readyButton = this.add.image(550,400,'ready');
+        this.readyButton.setInteractive()
+        this._name = this.socket.name;
+        this.yourInfo = this.add.text(10,40, `${this._name}: ${this.score}`, {color: 'white', fontFamily: 'Arial', fontSize: '32px'})
+    }
+
+    onReady = () => {
+        if(this.notifyText){
+            this.notifyText.setText("Wait for another player ready");
+        }
+        this.socket.send("READY", this._name);
+    }
+
+    onObjectClicked = (pointer: any, gameObject: any) => {
+        console.log(pointer, gameObject);
+        if(gameObject === this.readyButton){
+            this.onReady();
+            if(this.readyButton) this.readyButton.setVisible(false);
+        }
     }
 
     update(){
     
     }    
+
+    onPlayerReady = (data: string) => {
+        const _data = JSON.parse(data);
+        const {max, ready} = _data;
+
+        if(this.notifyText) this.notifyText.setText(`Wait for another player ready: ${ready}/${max}`);
+    }
+
+    onGameStart = (data: string) => {
+        const _data=  JSON.parse(data);
+        const { nowTurn } = _data;
+        
+        console.log(`game start: ${nowTurn}`);
+    }
 }

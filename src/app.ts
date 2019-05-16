@@ -4,9 +4,6 @@ import { GameScene } from "./sences/game";
 import { Login } from "./sences/login";
 import { Socket } from "./controller/socket";
 
-const player = new Player("marverlous");
-console.log("hello ", player.getName());
-
 const socket = new Socket();
 
 const gameSence = new GameScene(socket);
