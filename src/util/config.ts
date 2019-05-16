@@ -1,3 +1,3 @@
 export const Config = {
-    baseUrl : 'https://localhost:8888'
+    baseUrl : 'http://localhost:8888'
 }

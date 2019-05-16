@@ -1,14 +1,17 @@
 import { CardFactory, CARD_TYPE } from "../controller/cardFactory";
 import CardData from "../store/cardList";
+import { Socket } from "../controller/socket";
 
 export class GameScene extends Phaser.Scene{
     cardFactory : CardFactory;
     listCard : Array<string> = [];
     nowCard : number = 0;
     nowCardImage : Phaser.GameObjects.Image | undefined;
-    constructor(config: string | Phaser.Types.Scenes.SettingsConfig){
-        super(config);
+    socket: Socket;
+    constructor(socket: Socket){
+        super({key: "game"});
         this.cardFactory = new CardFactory(this);
+        this.socket = socket;
     }
 
     preload(){
@@ -39,7 +42,7 @@ export class GameScene extends Phaser.Scene{
 
     onClick = () => {
         if(!this.nowCardImage) return;
-        
+
         this.nowCardImage.destroy();
         
         if(this.nowCard + 1 >= this.listCard.length){
@@ -56,6 +59,10 @@ export class GameScene extends Phaser.Scene{
 
     create(){
         this.nowCardImage = this.add.image(300,400, this.listCard[this.nowCard]);
+        // console.log("create sence...");
+        // setInterval(() => {
+        //     this.onClick();
+        // },1000);
     }
 
     update(){

@@ -2,12 +2,15 @@ import Player from "./controller/player";
 import "phaser"
 import { GameScene } from "./sences/game";
 import { Login } from "./sences/login";
+import { Socket } from "./controller/socket";
 
 const player = new Player("marverlous");
 console.log("hello ", player.getName());
 
-const gameSence = new GameScene({key: "game"});
-const loginSence = new Login();
+const socket = new Socket();
+
+const gameSence = new GameScene(socket);
+const loginSence = new Login(socket);
 
 const config: Phaser.Types.Core.GameConfig = {
     title: "Starfall",
