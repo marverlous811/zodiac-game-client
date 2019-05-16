@@ -48,7 +48,7 @@ export class Socket extends events.EventEmitter{
         this._socket.on(name, handle);
     }
 
-    send(name: string, data: string){
+    send(name: string, data?: string){
         this.socket.emit(name, data);
     }
 }

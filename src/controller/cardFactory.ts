@@ -1,6 +1,6 @@
 const assetCardPath = '/assets/cards';
 export enum CARD_TYPE {
-    ZODIAC,
+    ZODIAC = 0,
     PLANET,
     CHAR,
     EVENT

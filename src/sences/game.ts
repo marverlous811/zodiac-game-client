@@ -2,6 +2,14 @@ import { CardFactory, CARD_TYPE } from "../controller/cardFactory";
 import CardData from "../store/cardList";
 import { Socket } from "../controller/socket";
 
+export enum GAME_STATE {
+    JOINED = 0,
+    READY,
+    START,
+    STAND_BY,
+    WAIT_OTHER,
+}
+
 export class GameScene extends Phaser.Scene{
     cardFactory : CardFactory;
     listCard : Array<string> = [];
@@ -9,14 +17,21 @@ export class GameScene extends Phaser.Scene{
     nowCardImage : Phaser.GameObjects.Image | undefined;
     socket: Socket;
     readyButton : Phaser.GameObjects.Image | undefined;
+    drawButton : Phaser.GameObjects.Image | undefined;
+    endButton : Phaser.GameObjects.Image | undefined;
     notifyText : Phaser.GameObjects.Text | undefined;
     yourInfo : Phaser.GameObjects.Text | undefined;
+    _state : GAME_STATE = GAME_STATE.JOINED;
     score : number = 0;
     _name : string = '';
     constructor(socket: Socket){
         super({key: "game"});
         this.cardFactory = new CardFactory(this);
         this.socket = socket;
+    }
+
+    get state(){
+        return this._state;
     }
 
     preload(){
@@ -43,14 +58,17 @@ export class GameScene extends Phaser.Scene{
         }
 
         this.load.image('ready', '/assets/UI/ready_button.png');
+        this.load.image('draw', '/assets/UI/draw_button.png');
+        this.load.image('end', '/assets/UI/end_button.png');
         this.notifyText = this.add.text(10,10, "welcome to game room", {color: 'white', fontFamily: 'Arial', fontSize: '32px'})
-        this.input.on("pointerdown", this.onClick);
-        this.input.on("gameobjectdown", this.onObjectClicked);
+        // this.input.on("pointerdown", this.onClick);
     }
 
     setListener(){
         this.socket.resgistEventHandle("PLAYER_READY", this.onPlayerReady);
         this.socket.resgistEventHandle("START_GAME", this.onGameStart);
+        this.socket.resgistEventHandle("END_DRAW_PHASE", this.endDrawPhase);
+        this.socket.resgistEventHandle("END_TURN", this.endTurn);
     }
 
     onClick = () => {
@@ -73,7 +91,7 @@ export class GameScene extends Phaser.Scene{
     create(){
         this.setListener();
         this.readyButton = this.add.image(550,400,'ready');
-        this.readyButton.setInteractive()
+        this.readyButton.setInteractive().on('pointerdown', this.ready);
         this._name = this.socket.name;
         this.yourInfo = this.add.text(10,40, `${this._name}: ${this.score}`, {color: 'white', fontFamily: 'Arial', fontSize: '32px'})
     }
@@ -82,15 +100,26 @@ export class GameScene extends Phaser.Scene{
         if(this.notifyText){
             this.notifyText.setText("Wait for another player ready");
         }
+        this._state = GAME_STATE.READY;
         this.socket.send("READY", this._name);
     }
 
-    onObjectClicked = (pointer: any, gameObject: any) => {
-        console.log(pointer, gameObject);
-        if(gameObject === this.readyButton){
-            this.onReady();
-            if(this.readyButton) this.readyButton.setVisible(false);
-        }
+    ready = () => {
+        console.log("ready");
+        this.onReady();
+        if(this.readyButton) this.readyButton.setVisible(false);
+    }
+
+    draw = () => {
+        if(this.state !== GAME_STATE.STAND_BY) return;
+        console.log("draw");
+        this.socket.send("DRAW")
+    }
+
+    end = () => {
+        if(this.state !== GAME_STATE.STAND_BY) return;
+        console.log("end");
+        this.socket.send("END_TURN")
     }
 
     update(){
@@ -109,5 +138,89 @@ export class GameScene extends Phaser.Scene{
         const { nowTurn } = _data;
         
         console.log(`game start: ${nowTurn}`);
+
+        this.drawButton = this.add.image(550, 700,'draw');
+        this.endButton = this.add.image(900, 700, 'end');
+
+        this.drawButton.setInteractive().on('pointerdown', this.draw);
+        this.endButton.setInteractive().on('pointerdown', this.end);
+
+        if(nowTurn === this._name){
+            this._state = GAME_STATE.STAND_BY;
+        }
+        else{
+            this._state = GAME_STATE.WAIT_OTHER;
+        }
+        
+    }
+
+    endDrawPhase = (data: string) => {
+        const _data = JSON.parse(data);
+        console.log(_data);
+        const {type, name, value} = _data;
+        let cardName = '';
+
+        switch(type){
+            case CARD_TYPE.ZODIAC: 
+                cardName = `${name}_${value}`;
+                break;
+            case CARD_TYPE.PLANET:
+                cardName = `${name}`;
+                break;
+            default: break;
+        }
+
+        console.log(cardName);
+
+        if(!cardName) {
+            return;
+        }
+
+        const cardIndex = this.findACard(cardName);
+        console.log(cardIndex);
+        if(cardIndex === -1){
+            return;
+        }
+
+        this.hideNowCard();
+
+        this.nowCard = cardIndex;
+        this.showNowCard();
+    }
+
+    endTurn = (data: string) => {
+        const _data = JSON.parse(data);
+        console.log("end turn... ",_data);
+        if(_data.now.name === this._name){
+            this.score = _data.now.score;
+            this._state = GAME_STATE.WAIT_OTHER;
+            if(this.yourInfo) this.yourInfo.setText(`${this._name}: ${this.score}`);
+        }
+
+        if(_data.next.name){
+            this._state = GAME_STATE.STAND_BY;
+        }
+    }
+
+    showNowCard = () => {
+        this.nowCardImage = this.add.image(300,400, this.listCard[this.nowCard])
+    }
+
+    hideNowCard = () => {
+        if(this.nowCardImage) 
+            this.nowCardImage.destroy();
+    }
+
+    findACard = (name: string) => {
+        let index = -1;
+        for(let i = 0; i < this.listCard.length; i++){
+            // console.log(this.listCard[i]);
+            if(this.listCard[i] === name){
+                index = i;
+                break;
+            }
+        }
+
+        return index;
     }
 }
