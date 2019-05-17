@@ -1,10 +1,15 @@
-## Description
+## Zodia-game-client
 
-### A seed project using typescript, can apply for both client and server
+### Description 
+- A client for zodiac game, using typescript and phaser 3 as a game engine
 
-- Client: using webpack
+### Requirement
 
-- Server: using nodejs
+- node >= 8.10.0
+
+- typescript compiler
+
+- webpack
 
 ### Usage
 
@@ -12,10 +17,10 @@
 
     `npm install` 
 
-- For server
+- run
 
-    `npm run start-server`
+    `npm start`
 
-- For client
+- build
 
-    `npm run start-client`
+    `npm run build`
